@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "Seat Tracker",
+  "version": "1.0.0",
+  "description": "Real-time seat availability for BookMyShow & District",
+  "permissions": ["cookies"],
+  "host_permissions": [
+    "https://in.bookmyshow.com/*",
+    "https://www.district.in/*"
+  ],
+  "action": {
+    "default_popup": "index.html",
+    "default_title": "Seat Tracker"
+  }
+}
