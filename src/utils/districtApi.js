@@ -59,23 +59,16 @@ function buildDistrictHeaders(cookieStr, eventLink) {
   }
 }
 
-async function apiFetch(url, headers, cookieStr) {
-  if (import.meta.env.DEV) {
-    return fetch(url, { headers, credentials: 'include' })
-  }
-  return fetch('/api/proxy', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ url, headers, cookieStr }),
-  })
-}
-
 export async function fetchDistrictEventStands(eventLink, cookieStr) {
   const slug = extractSlug(eventLink)
   if (!slug) throw new Error(`Could not extract slug from URL: ${eventLink}`)
 
   const url = `https://www.district.in/gw/consumer/events/v1/event/getBySlug/${slug}?tagSummaryView=true`
-  const res = await apiFetch(url, buildDistrictHeaders(cookieStr, eventLink), cookieStr)
+  const res = await fetch(url, {
+    method: "GET",
+    headers: buildDistrictHeaders(cookieStr, eventLink),
+    credentials: "include",
+  })
 
   if (!res.ok) throw new Error(`District API error: ${res.status} ${res.statusText}`)
   const json = await res.json()
