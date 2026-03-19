@@ -1,21 +1,27 @@
 import React, { useState } from 'react'
-import { RefreshCw, ChevronRight, ShieldCheck } from 'lucide-react'
+import { RefreshCw, ChevronRight, ShieldCheck, Settings } from 'lucide-react'
 import { BMS_DEMO, DISTRICT_DEMO } from '../utils/demoData'
 import { isExtension } from '../utils/extensionCookies'
 
-export default function ConfigPanel({ onStart }) {
-  const [platform,   setPlatform]   = useState('bms')
-  const [eventId,    setEventId]    = useState('')
-  const [eventLink,  setEventLink]  = useState('')
-  const [cookieStr,  setCookieStr]  = useState('')
-  const [auto,       setAuto]       = useState(true)
-  const [secs,       setSecs]       = useState(10)
+const COOKIE_KEY = 'seat_tracker_cookies'
 
+export default function ConfigPanel({ onStart }) {
   const ext = isExtension()
+
+  const savedCookies = !ext ? (localStorage.getItem(COOKIE_KEY) || '') : ''
+  const [platform,    setPlatform]    = useState('bms')
+  const [eventId,     setEventId]     = useState('')
+  const [eventLink,   setEventLink]   = useState('')
+  const [cookieStr,   setCookieStr]   = useState(savedCookies)
+  const [showCookies, setShowCookies] = useState(!savedCookies && !ext)
+  const [auto,        setAuto]        = useState(true)
+  const [secs,        setSecs]        = useState(10)
 
   const submit = e => {
     e.preventDefault()
-    onStart({ platform, eventId, eventLink, cookieStr, autoRefresh: auto, interval: secs * 1000, intervalSec: secs })
+    const cookies = ext ? '' : cookieStr
+    if (!ext && cookies) localStorage.setItem(COOKIE_KEY, cookies)
+    onStart({ platform, eventId, eventLink, cookieStr: cookies, autoRefresh: auto, interval: secs * 1000, intervalSec: secs })
   }
 
   const demo = () => {
@@ -23,10 +29,10 @@ export default function ConfigPanel({ onStart }) {
     onStart({ platform, eventId: 'demo', eventLink: 'demo', cookieStr: '', autoRefresh: false, intervalSec: secs, _demoData: d })
   }
 
+  const accentColor = platform === 'bms' ? '#e50914' : '#6366f1'
+
   return (
     <div style={{ minHeight: '100vh', background: '#080810', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '32px 20px' }}>
-
-      {/* Subtle top glow */}
       <div style={{ position: 'fixed', top: -200, left: '50%', transform: 'translateX(-50%)', width: 600, height: 400, background: 'radial-gradient(ellipse, rgba(99,102,241,0.12) 0%, transparent 70%)', pointerEvents: 'none', zIndex: 0 }} />
 
       <div style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: 420 }}>
@@ -44,7 +50,6 @@ export default function ConfigPanel({ onStart }) {
 
         {/* Card */}
         <div style={{ background: '#0f0f1a', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, padding: 28 }}>
-
           <form onSubmit={submit}>
 
             {/* Platform tabs */}
@@ -66,35 +71,48 @@ export default function ConfigPanel({ onStart }) {
               </div>
             </div>
 
-            {/* BMS */}
-            {platform === 'bms' && (
+            {/* Event input */}
+            {platform === 'bms' ? (
               <Field label="Event ID" hint="e.g. ET00491227 — from the BMS event URL">
-                <input value={eventId} onChange={e => setEventId(e.target.value)} placeholder="ET00491227" required style={inputStyle} onFocus={e => e.target.style.borderColor = 'rgba(229,9,20,0.4)'} onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'} />
+                <input value={eventId} onChange={e => setEventId(e.target.value)} placeholder="ET00491227" required style={inputStyle}
+                  onFocus={e => e.target.style.borderColor = 'rgba(229,9,20,0.4)'}
+                  onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'} />
               </Field>
-            )}
-
-            {/* District */}
-            {platform === 'district' && (
+            ) : (
               <Field label="Event URL" hint="Full district.in event link">
-                <input value={eventLink} onChange={e => setEventLink(e.target.value)} placeholder="https://www.district.in/events/event-buy-tickets" required style={inputStyle} onFocus={e => e.target.style.borderColor = 'rgba(99,102,241,0.4)'} onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'} />
+                <input value={eventLink} onChange={e => setEventLink(e.target.value)} placeholder="https://www.district.in/events/event-buy-tickets" required style={inputStyle}
+                  onFocus={e => e.target.style.borderColor = 'rgba(99,102,241,0.4)'}
+                  onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'} />
               </Field>
             )}
 
-            {/* Cookie input / status */}
+            {/* Cookie section */}
             {ext ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 10, background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.2)', marginBottom: 18 }}>
                 <ShieldCheck size={14} color="#4ade80" />
                 <span style={{ fontSize: 12, color: '#4ade80', fontWeight: 500 }}>Cookies auto-detected from browser</span>
               </div>
+            ) : savedCookies && !showCookies ? (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderRadius: 10, background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.2)', marginBottom: 18 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <ShieldCheck size={14} color="#4ade80" />
+                  <span style={{ fontSize: 12, color: '#4ade80', fontWeight: 500 }}>Cookies saved</span>
+                </div>
+                <button type="button" onClick={() => setShowCookies(true)}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: '#3a3a60', padding: 0 }}>
+                  <Settings size={11} /> Update
+                </button>
+              </div>
             ) : (
-              <Field label="Cookies" hint="Paste your BMS cookie string from browser DevTools → Network → any BMS request → Cookie header">
+              <Field label="Cookies" hint="Paste your BMS cookie string — saved automatically for next time">
                 <textarea
                   value={cookieStr}
                   onChange={e => setCookieStr(e.target.value)}
                   placeholder="Paste cookie string here…"
                   rows={3}
+                  required={!ext}
                   style={{ ...inputStyle, resize: 'vertical', fontSize: 11, fontFamily: 'monospace', lineHeight: 1.5 }}
-                  onFocus={e => e.target.style.borderColor = platform === 'bms' ? 'rgba(229,9,20,0.4)' : 'rgba(99,102,241,0.4)'}
+                  onFocus={e => e.target.style.borderColor = `${accentColor}66`}
                   onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
                 />
               </Field>
@@ -106,8 +124,7 @@ export default function ConfigPanel({ onStart }) {
                 style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
                 <Toggle on={auto} />
                 <span style={{ fontSize: 13, fontWeight: 500, color: auto ? '#a0a0c0' : '#2e2e48', display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <RefreshCw size={13} />
-                  Auto Refresh
+                  <RefreshCw size={13} /> Auto Refresh
                 </span>
               </button>
               {auto && (
@@ -122,7 +139,7 @@ export default function ConfigPanel({ onStart }) {
 
             {/* Submit */}
             <button type="submit"
-              style={{ width: '100%', padding: '13px 0', borderRadius: 10, border: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 700, color: '#fff', background: platform === 'bms' ? 'linear-gradient(135deg, #e50914, #ff4444)' : 'linear-gradient(135deg, #6366f1, #818cf8)', boxShadow: platform === 'bms' ? '0 4px 24px rgba(229,9,20,0.3)' : '0 4px 24px rgba(99,102,241,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, transition: 'opacity 0.15s' }}
+              style={{ width: '100%', padding: '13px 0', borderRadius: 10, border: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 700, color: '#fff', background: `linear-gradient(135deg, ${accentColor}, ${platform === 'bms' ? '#ff4444' : '#818cf8'})`, boxShadow: `0 4px 24px ${accentColor}4d`, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, transition: 'opacity 0.15s' }}
               onMouseEnter={e => e.currentTarget.style.opacity = '0.88'}
               onMouseLeave={e => e.currentTarget.style.opacity = '1'}>
               Start Tracking <ChevronRight size={16} />
@@ -133,7 +150,9 @@ export default function ConfigPanel({ onStart }) {
 
         {/* Demo */}
         <div style={{ marginTop: 20, textAlign: 'center' }}>
-          <button onClick={demo} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: '#252540', textDecoration: 'underline', textUnderlineOffset: 3, transition: 'color 0.15s' }} onMouseEnter={e => e.currentTarget.style.color = '#5555a0'} onMouseLeave={e => e.currentTarget.style.color = '#252540'}>
+          <button onClick={demo} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: '#252540', textDecoration: 'underline', textUnderlineOffset: 3, transition: 'color 0.15s' }}
+            onMouseEnter={e => e.currentTarget.style.color = '#5555a0'}
+            onMouseLeave={e => e.currentTarget.style.color = '#252540'}>
             Preview demo — {platform === 'bms' ? 'KKR vs PBKS IPL 2026' : 'SRH Fan Meet'}
           </button>
         </div>
@@ -144,11 +163,13 @@ export default function ConfigPanel({ onStart }) {
 }
 
 const inputStyle = {
-  display: 'block', width: '100%', padding: '11px 14px', borderRadius: 10, fontSize: 13, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#d0d0e8', outline: 'none', transition: 'border-color 0.15s',
+  display: 'block', width: '100%', padding: '11px 14px', borderRadius: 10, fontSize: 13,
+  background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
+  color: '#d0d0e8', outline: 'none', transition: 'border-color 0.15s', boxSizing: 'border-box',
 }
 
 function Label({ children }) {
-  return <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#2a2a45', marginBottom: 0 }}>{children}</div>
+  return <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#2a2a45' }}>{children}</div>
 }
 
 function Field({ label, hint, children }) {
