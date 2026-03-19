@@ -83,6 +83,11 @@ function StandRow({ stand, index, highlight }) {
               <span style={{ fontSize: 22, fontWeight: 800, color: qColor, letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums' }}>
                 {qty.toLocaleString()}
               </span>
+              {hasCt && (
+                <span style={{ fontSize: 11, color: '#2a2a45', fontVariantNumeric: 'tabular-nums' }}>
+                  / {stand.total.toLocaleString()}
+                </span>
+              )}
               {diff !== 0 && (
                 <span style={{ fontSize: 11, fontWeight: 700, color: diff > 0 ? '#22c55e' : '#ef4444', animation: 'countUp 0.4s ease forwards' }}>
                   {diff > 0 ? `+${diff}` : diff}
@@ -292,11 +297,18 @@ export default function TrackerModal({
               <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#252548', marginBottom: 8 }}>Available</div>
               {(loading && !data) || stats.allLoading
                 ? <div className="shimmer" style={{ height: 34, width: 80, borderRadius: 5, marginBottom: 6 }} />
-                : <div style={{ fontSize: 34, fontWeight: 900, color: '#22c55e', lineHeight: 1, letterSpacing: '-0.03em', fontVariantNumeric: 'tabular-nums', marginBottom: 6 }}>
-                    {stats.totalAvail.toLocaleString('en-IN')}{stats.loadingCt > 0 ? '+' : ''}
+                : <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 6, flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: 34, fontWeight: 900, color: '#22c55e', lineHeight: 1, letterSpacing: '-0.03em', fontVariantNumeric: 'tabular-nums' }}>
+                      {stats.totalAvail.toLocaleString('en-IN')}{stats.loadingCt > 0 ? '+' : ''}
+                    </span>
+                    {stats.totalCap > 0 && (
+                      <span style={{ fontSize: 14, color: '#2a2a45', fontVariantNumeric: 'tabular-nums' }}>
+                        / {stats.totalCap.toLocaleString('en-IN')}
+                      </span>
+                    )}
                   </div>
               }
-              {stats.remPct !== null && <div style={{ fontSize: 11, color: '#1a4a2c' }}>{stats.remPct}% of capacity</div>}
+              {stats.remPct !== null && <div style={{ fontSize: 11, color: '#1a4a2c' }}>{stats.remPct}% remaining</div>}
               {stats.loadingCt > 0 && (
                 <div style={{ fontSize: 11, color: '#2a2a45', display: 'flex', alignItems: 'center', gap: 4, marginTop: stats.allLoading ? 8 : 2 }}>
                   <Loader2 size={10} style={{ animation: 'spin 0.8s linear infinite' }} />

@@ -100,8 +100,9 @@ export async function fetchSeatCount(venueCode, sessionID, areaCatCode, cookies,
   if (json.status === 403 || json.status === 401 || json.status === 400) return null
   const seats = Object.values(json.data || {})
   if (!seats.length) return null
-  const available = seats.filter(s => s.isAvailable).length
-  const total = seats.length
+  const ownSeats = seats.filter(s => !s.isOtherCategory)
+  const available = ownSeats.filter(s => !s.isBooked).length
+  const total = ownSeats.length
   return { available, total }
 }
 
