@@ -1,3 +1,14 @@
+async function apiFetch(url, headers, cookieStr) {
+  if (import.meta.env.DEV) {
+    return fetch(url, { headers, credentials: 'include' })
+  }
+  return fetch('/api/proxy', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ url, headers, cookieStr }),
+  })
+}
+
 export function parseCookies(cookieStr) {
   return (cookieStr || '').split('; ').reduce((acc, pair) => {
     const i = pair.indexOf('=')
@@ -75,12 +86,10 @@ export function buildHeaders(cookies, venueCode = '', sessionID = '', eventCode 
 /* ─── Event info (fast) ─── */
 export async function fetchBmsEventInfo(eventId, cookieStr) {
   const cookies = parseCookies(cookieStr)
-  const res = await fetch(
+  const res = await apiFetch(
     `https://in.bookmyshow.com/api/le/events/info/${eventId}`,
-    {
-      headers: buildHeaders(cookies),
-      credentials: 'include',
-    }
+    buildHeaders(cookies),
+    cookieStr,
   )
   if (!res.ok) throw new Error(`BMS API error: ${res.status}`)
   const json = await res.json()
@@ -89,12 +98,9 @@ export async function fetchBmsEventInfo(eventId, cookieStr) {
 }
 
 /* ─── Single stand seat count from seatLayout API ─── */
-export async function fetchSeatCount(venueCode, sessionID, areaCatCode, cookies, eventId = '', canonicalUrl = '') {
+export async function fetchSeatCount(venueCode, sessionID, areaCatCode, cookies, eventId = '', canonicalUrl = '', cookieStr = '') {
   const url = `https://in.bookmyshow.com/api/le/seatLayout?venueCode=${venueCode}&sessionID=${sessionID}&category=${areaCatCode}&appCode=WEB&appVersion=0`
-  const res = await fetch(url, {
-    headers: buildHeaders(cookies, venueCode, sessionID, eventId, canonicalUrl),
-    credentials: 'include',
-  })
+  const res = await apiFetch(url, buildHeaders(cookies, venueCode, sessionID, eventId, canonicalUrl), cookieStr)
   if (!res.ok) return null
   const json = await res.json()
   if (json.status === 403 || json.status === 401 || json.status === 400) return null
@@ -188,7 +194,7 @@ export async function enhanceBmsWithSeatCounts(data, cookieStr, onStandUpdate) {
 
   // Fetch all in parallel — each resolves independently
   const fetchPromises = seatableIndexes.map(async ({ stand, i }) => {
-    const counts = await fetchSeatCount(venueCode, sessionID, stand.areaCatCode, cookies, data.eventId || '', data.canonicalUrl || '')
+    const counts = await fetchSeatCount(venueCode, sessionID, stand.areaCatCode, cookies, data.eventId || '', data.canonicalUrl || '', cookieStr)
     if (!counts) return { i, update: { countLoading: false } }
     const fill = counts.total > 0
       ? Math.round(((counts.total - counts.available) / counts.total) * 100)
