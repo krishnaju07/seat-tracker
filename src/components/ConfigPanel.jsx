@@ -4,17 +4,18 @@ import { BMS_DEMO, DISTRICT_DEMO } from '../utils/demoData'
 import { isExtension } from '../utils/extensionCookies'
 
 export default function ConfigPanel({ onStart }) {
-  const [platform, setPlatform] = useState('bms')
-  const [eventId,  setEventId]  = useState('')
-  const [eventLink,setEventLink]= useState('')
-  const [auto,     setAuto]     = useState(true)
-  const [secs,     setSecs]     = useState(10)
+  const [platform,   setPlatform]   = useState('bms')
+  const [eventId,    setEventId]    = useState('')
+  const [eventLink,  setEventLink]  = useState('')
+  const [cookieStr,  setCookieStr]  = useState('')
+  const [auto,       setAuto]       = useState(true)
+  const [secs,       setSecs]       = useState(10)
 
   const ext = isExtension()
 
   const submit = e => {
     e.preventDefault()
-    onStart({ platform, eventId, eventLink, cookieStr: '', autoRefresh: auto, interval: secs * 1000, intervalSec: secs })
+    onStart({ platform, eventId, eventLink, cookieStr, autoRefresh: auto, interval: secs * 1000, intervalSec: secs })
   }
 
   const demo = () => {
@@ -79,13 +80,25 @@ export default function ConfigPanel({ onStart }) {
               </Field>
             )}
 
-            {/* Cookie status */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 10, background: ext ? 'rgba(34,197,94,0.06)' : 'rgba(255,255,255,0.03)', border: `1px solid ${ext ? 'rgba(34,197,94,0.2)' : 'rgba(255,255,255,0.06)'}`, marginBottom: 18 }}>
-              <ShieldCheck size={14} color={ext ? '#4ade80' : '#383858'} />
-              <span style={{ fontSize: 12, color: ext ? '#4ade80' : '#383858', fontWeight: 500 }}>
-                {ext ? 'Cookies auto-detected from browser' : 'Cookies detected automatically when loaded as extension'}
-              </span>
-            </div>
+            {/* Cookie input / status */}
+            {ext ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 10, background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.2)', marginBottom: 18 }}>
+                <ShieldCheck size={14} color="#4ade80" />
+                <span style={{ fontSize: 12, color: '#4ade80', fontWeight: 500 }}>Cookies auto-detected from browser</span>
+              </div>
+            ) : (
+              <Field label="Cookies" hint="Paste your BMS cookie string from browser DevTools → Network → any BMS request → Cookie header">
+                <textarea
+                  value={cookieStr}
+                  onChange={e => setCookieStr(e.target.value)}
+                  placeholder="Paste cookie string here…"
+                  rows={3}
+                  style={{ ...inputStyle, resize: 'vertical', fontSize: 11, fontFamily: 'monospace', lineHeight: 1.5 }}
+                  onFocus={e => e.target.style.borderColor = platform === 'bms' ? 'rgba(229,9,20,0.4)' : 'rgba(99,102,241,0.4)'}
+                  onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.08)'}
+                />
+              </Field>
+            )}
 
             {/* Auto refresh */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 16px', borderRadius: 10, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', marginBottom: 20 }}>

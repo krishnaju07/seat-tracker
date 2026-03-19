@@ -60,7 +60,9 @@ export function buildHeaders(cookies, venueCode = '', sessionID = '', eventCode 
     'x-longitude': String(rgn.Long || ''),
     'x-location-selection': 'manual',
     'x-bms-id': normalizeBmsId(cookies.bmsId),
-    'x-segments': 'false',
+    'x-email': ud.MEMBEREMAIL || userDetails.deemedUserEmail || '',
+    'x-deemed-email': userDetails.deemedUserEmail || ud.MEMBEREMAIL || '',
+    'x-segments': parseJSONCookie(cookies, 'platform')?.segments || 'false',
     'cf-ipcountry': 'IN',
     // Referer: aerial canvas URL matching the script pattern exactly
     ...(venueCode && sessionID ? {
